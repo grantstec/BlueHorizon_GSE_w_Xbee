@@ -41,10 +41,14 @@ void setup() {
   digitalWrite(LAUNCH_PYRO_FIRE, LOW); 
   digitalWrite(SEP_PYRO_FIRE, LOW);
 
+  // Initialize Buzzer and Play Startup Tones
+  initializeHardware();
+
   Serial.begin(9600);
   
   if (!initSensors()) {
       Serial.println("Sensors init failed!");
+      
   }
 
   Fuel_Servo.attach(8);  // J2
@@ -143,6 +147,7 @@ void loop() {
       // DISARM
       else if (commandVal == CMD_DISARM) {
         systemState = UNARMED;
+        stopBuzzerTone(); // Ensure buzzer is off
         Fuel_Servo.write(5); 
         Ox_Servo.write(5); 
         Ox_load.write(5); 
@@ -167,6 +172,7 @@ void loop() {
         servo_timer = millis(); // Start of FIRE sequence (T=0)
         cam_timer = millis();
         
+        startBuzzerTone(1000); // Start high pitch buzzer tone (3000 Hz)
         triggerFire(); // Fire pyros immediately
         // No blocking delay here!
         
@@ -191,6 +197,11 @@ void loop() {
     // --- FIRE SEQUENCING LOGIC (Non-blocking) ---
     if (systemState == FIRE) {
         unsigned long elapsed = millis() - servo_timer;
+
+        // Stop buzzer after 1 second
+        if (elapsed >= 1000) {
+            stopBuzzerTone();
+        }
 
         // 1. Pyros (Turn off after 2.5s)
         if (elapsed > 2500) {

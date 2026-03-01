@@ -12,7 +12,15 @@
 
 bool countDownDone = false; // Flag for countdown completion
 
+IntervalTimer buzzerTimer;
+volatile bool buzzerState = false;
+
 void playAlertTone(int frequency, int duration) {
+    // Ensure the background ISR doesn't conflict with this blocking tone
+    buzzerTimer.end();
+    digitalWriteFast(BUZZER_HIGH, LOW);
+    digitalWriteFast(BUZZER_LOW, LOW);
+
     unsigned long period = 1000000 / frequency; // Period in microseconds
     unsigned long halfPeriod = period / 2; // Half period in microseconds
     unsigned long startTime = millis(); 
@@ -31,7 +39,30 @@ void playAlertTone(int frequency, int duration) {
     digitalWrite(BUZZER_LOW, LOW);
 }
 
-void initializeHardware(bool& separationTriggered, bool& launchTriggered) {
+void buzzerISR() {
+    buzzerState = !buzzerState;
+    if (buzzerState) {
+        digitalWriteFast(BUZZER_HIGH, HIGH);
+        digitalWriteFast(BUZZER_LOW, LOW);
+    } else {
+        digitalWriteFast(BUZZER_HIGH, LOW);
+        digitalWriteFast(BUZZER_LOW, HIGH);
+    }
+}
+
+void startBuzzerTone(int frequency) {
+    if (frequency <= 0) return;
+    unsigned long interval = 1000000 / (2 * frequency); // Calculate interval for half-period
+    buzzerTimer.begin(buzzerISR, interval); 
+}
+
+void stopBuzzerTone() {
+    buzzerTimer.end();
+    digitalWriteFast(BUZZER_HIGH, LOW);
+    digitalWriteFast(BUZZER_LOW, LOW);
+}
+
+void initializeHardware() {
     
     pinMode(BUZZER_HIGH, OUTPUT);
     pinMode(BUZZER_LOW, OUTPUT);

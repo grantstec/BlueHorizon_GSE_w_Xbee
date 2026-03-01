@@ -2,6 +2,7 @@
 #include <Wire.h>
 
 Adafruit_ADS1115 ads;
+bool sensorsInitialized = false;
 
 bool initSensors() {
     // Initialize I2C1 (Wire1) for Teensy 4.1 pins 16 (SCL1) and 17 (SDA1)
@@ -9,7 +10,8 @@ bool initSensors() {
 
     // Initialize ADS1115 on Wire1 (Address 0x48)
     if (!ads.begin(ADS1115_I2C_ADDR, &Wire1)) {
-        Serial.println("Failed to initialize ADS1115!");
+        Serial.println("Failed to initialize ADS1115! Proceeding without sensors.");
+        sensorsInitialized = false;
         return false;
     }
     
@@ -18,10 +20,19 @@ bool initSensors() {
     ads.setDataRate(ADS1115_DATA_RATE);
 
     Serial.println("ADS1115 initialized.");
+    sensorsInitialized = true;
     return true;
 }
 
 void readSensors(double& pt, double& tankThrust, double& engineThrust) {
+    if (!sensorsInitialized) {
+        // Return dummy values if sensors aren't connected so code doesn't hang
+        pt = 0.0;
+        tankThrust = 0.0;
+        engineThrust = 0.0;
+        return;
+    }
+
     // Read raw values (16-bit signed)
     int16_t adc0 = ads.readADC_SingleEnded(0); // Tank Load Cell (A0)
     int16_t adc1 = ads.readADC_SingleEnded(1); // Engine Load Cell (A1)

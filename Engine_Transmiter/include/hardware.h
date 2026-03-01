@@ -23,12 +23,20 @@
 void playAlertTone(int frequency, int duration);
 
 /**
- * @brief Initialize hardware components (LEDs, pyro channels, buzzer)
- * @param leds Pointer to LED array
- * @param separationTriggered Pointer to separation flag
- * @param launchTriggered Pointer to launch flag
+ * @brief Start a non-blocking buzzer tone
+ * @param frequency Frequency of the tone in Hz
  */
-void initializeHardware(bool& separationTriggered, bool& launchTriggered);
+void startBuzzerTone(int frequency);
+
+/**
+ * @brief Stop the non-blocking buzzer tone
+ */
+void stopBuzzerTone();
+
+/**
+ * @brief Initialize hardware components (LEDs, pyro channels, buzzer)
+ */
+void initializeHardware();
 
 /**
  * @brief Check pyro continuity and buzz if continuity is detected
