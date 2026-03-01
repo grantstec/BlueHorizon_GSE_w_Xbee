@@ -106,8 +106,17 @@ enum SystemState {
 // Engine: R1=4.59k, R2=4.72k
 #define ENGINE_DIVIDER_RATIO ((4.59 + 4.72) / 4.72)
 
-// Pressure Transducer (ADS1115 A3)
-// PSI/Volt = 1350 / 5 = 270
-#define PT_CALIBRATION 270.0 // PSI/volt
+// Pressure Transducer (ADS1115 A2)
+// Calibration Points (User Adjusted):
+// Original: 0V = -127.78, 10V = 2427.78 -> Offset -127.78
+// Observed: 95 PSI actual reading as 88.7 PSI -> Error of -6.3 PSI
+// Correction: Add 6.3 to offset -> New Offset = -121.48
+#define PT_SLOPE 255.556
+#define PT_OFFSET -121.48
+
+// PT Divider: Ratio is 1.0 (No divider)
+#define PT_DIVIDER_RATIO 1.0
+
+
 
 #endif // CONFIG_H

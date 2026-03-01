@@ -50,7 +50,10 @@ void readSensors(double& pt, double& tankThrust, double& engineThrust) {
     engineThrust = engineVolts * ENGINE_LC_CALIBRATION;
 
     // Pressure Transducer Calculation (A2)
-    pt = volts2 * PT_CALIBRATION;
+    // First, reconstruct the 0-10V signal from the voltage divider output
+    float ptSensorVolts = volts2 * PT_DIVIDER_RATIO;
+    // Apply linear calibration: PSI = (Slope * Voltage) + Offset
+    pt = (ptSensorVolts * PT_SLOPE) + PT_OFFSET;
 }
 
 void readContinuity(double& c1, double& c2) {
