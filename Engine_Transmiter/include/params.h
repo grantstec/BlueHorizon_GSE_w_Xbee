@@ -96,8 +96,8 @@ enum SystemState {
 // I will assume the hardware is set up correctly to not fry the ADS1115.
 
 // Calibration Factors (Units per Volt)
-#define TANK_LC_CALIBRATION 2.34     // lbs/volt
-#define ENGINE_LC_CALIBRATION 10.0  // lbs/volt
+#define TANK_LC_CALIBRATION 2.22     // lbs/volt
+#define ENGINE_LC_CALIBRATION 10.5747  // lbs/volt
 
 // Resistor Dividers for restoring original voltage
 // Tank: R1=4.62k, R2=4.6k

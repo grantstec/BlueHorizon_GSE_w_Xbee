@@ -57,10 +57,10 @@ void setup() {
   CO2_Servo.attach(6);   //J4
   Cam_Servo.attach(24);  //J5
 
-  Fuel_Servo.write(8); //5 close 70 open
-  Ox_Servo.write(5); //5 close 70 open
-  Ox_load.write(5);  //5 close 70 open
-  CO2_Servo.write(0); //0 close 65 open
+  Fuel_Servo.write(6); //6 close 60 open
+  Ox_Servo.write(5); //5 close 65 open
+  Ox_load.write(10);  //10 close 70 open
+  CO2_Servo.write(3); //3 close 65 open
   Cam_Servo.write(70); 
 
 
@@ -118,17 +118,13 @@ void loop() {
         last_telemetry_time = millis();
         // Send strictly numeric CSV data
         sendData(PT, tankThrust, engineThrust, continuity1, continuity2, (int)systemState);
-        // Debug: Confirm main loop is running
-        // Serial.println("Telemetry Sent"); 
     }
 
-    // Logic State Machine
     
-    // Continuous Weight Check (Exit LOADING if weight changes by >= 5.0 lbs from ARM value)
     if (systemState == LOADING) {
-       if (abs(tankThrust - initialTankWeight) >= 5.0) { 
+       if (abs(tankThrust - initialTankWeight) >= 4.5) { 
           systemState = LOADED;
-          Ox_load.write(5); 
+          Ox_load.write(10); 
           Serial.println("Loading Complete (Weight Trigger)");
        }
     }
@@ -148,10 +144,10 @@ void loop() {
       else if (commandVal == CMD_DISARM) {
         systemState = UNARMED;
         stopBuzzerTone(); // Ensure buzzer is off
-        Fuel_Servo.write(5); 
+        Fuel_Servo.write(6); 
         Ox_Servo.write(5); 
-        Ox_load.write(5); 
-        CO2_Servo.write(0); 
+        Ox_load.write(10); 
+        CO2_Servo.write(3); 
         camservo_fired = false;
       }
       // LOAD
@@ -163,7 +159,7 @@ void loop() {
       // LOADED (Manual Command Only)
       else if (systemState == LOADING && commandVal == CMD_LOADED) {
         systemState = LOADED;
-        Ox_load.write(5); 
+        Ox_load.write(10); 
       }
       // FIRE
       else if (commandVal == CMD_FIRE && systemState != FIRE) {
@@ -172,67 +168,57 @@ void loop() {
         servo_timer = millis(); // Start of FIRE sequence (T=0)
         cam_timer = millis();
         
-        startBuzzerTone(1000); // Start high pitch buzzer tone (3000 Hz)
+        startBuzzerTone(1000); 
         triggerFire(); // Fire pyros immediately
-        // No blocking delay here!
         
         camservo_fired = true;
       }
       // PURGE
       else if (commandVal == CMD_PURGE) {
         CO2_Servo.write(65); 
+        Ox_Servo.write(65);
         CO2_timer = millis();
         systemState = PURGE; 
       }
       // PURGED
       else if (commandVal == CMD_PURGED) {
         systemState = PURGED;
-        CO2_Servo.write(0); 
+        Ox_Servo.write(5);
+        CO2_Servo.write(3); 
       }
       else {
-          // Unknown or invalid command for current state
       }
     }
-    
-    // --- FIRE SEQUENCING LOGIC (Non-blocking) ---
+    // FIRE
     if (systemState == FIRE) {
         unsigned long elapsed = millis() - servo_timer;
 
-        // Stop buzzer after 1 second
         if (elapsed >= 1000) {
             stopBuzzerTone();
         }
 
-        // 1. Pyros (Turn off after 2.5s)
-        if (elapsed > 2500) {
+        if (elapsed > 2000) {
             digitalWrite(LAUNCH_PYRO_FIRE, LOW); 
             digitalWrite(SEP_PYRO_FIRE, LOW);
         }
 
-        // 2. Servo Opening Logic (Start after 1s delay, complete over 3s -> T=1s to T=4s)
-        if (elapsed >= 1000 && elapsed <= 4000) {
-            // Linear Servo Opening
-            // Progress 0.0 to 1.0 over the 3 second window
-            float progress = (float)(elapsed - 1000) / 3000.0; 
+        if (elapsed >= 100 && elapsed <= 3100) {
+            float progress = (float)(elapsed - 100) / 3000.0; 
+
+            int fuelAngle = 6 + (int)((60 - 6) * progress);
             
-            // Map 0.0-1.0 to Angle range (5 to 65) linearly
-            int startAngle = 5;
-            int endAngle = 65;
-            int currentAngle = startAngle + (int)((endAngle - startAngle) * progress); 
+            int oxAngle = 5 + (int)((65 - 5) * progress);
             
-            Fuel_Servo.write(currentAngle);
-            Ox_Servo.write(currentAngle);
+            Fuel_Servo.write(fuelAngle);
+            Ox_Servo.write(oxAngle);
         } 
-        else if (elapsed > 4000 && elapsed < 15000) {
-            // Ensure fully open after the ramp in case loop timing missed the exact end
-             Fuel_Servo.write(65);
+        else if (elapsed > 3100 && elapsed < 15000) {
+             Fuel_Servo.write(60);
              Ox_Servo.write(65);
         }
 
-        // 3. Cam Servo Oscillation (Every 1.5s)
-        if (millis() - cam_timer >= 1500) {
+        if (millis() - cam_timer >= 1500 && elapsed < 15000) {
             cam_timer = millis();
-            // Toggle cam servo
             if (camservo_fired) {
                 Cam_Servo.write(70);
                 camservo_fired = false;
@@ -242,9 +228,8 @@ void loop() {
             }
         }
 
-        // 4. Auto-Shutdown (15s)
         if (elapsed > 15000) {
-            Fuel_Servo.write(5); 
+            Fuel_Servo.write(6); 
             Ox_Servo.write(5); 
         }
     }
