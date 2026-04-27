@@ -42,6 +42,7 @@ void sendAck(int ackNum);
  * @param cont1 Continuity 1 value
  * @param cont2 Continuity 2 value
  * @param state System state (Enum)
+ * @note Appends millis() timestamp as final CSV field
  */
 void sendData(double pt, double tankThrust, double engineThrust, double cont1, double cont2, int state);
 

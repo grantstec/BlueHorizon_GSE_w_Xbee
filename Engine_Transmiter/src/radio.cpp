@@ -77,10 +77,10 @@ void sendData(double pt, double tankThrust, double engineThrust, double cont1, d
     // Create a buffer to hold the data
     char buf[128]; 
     // Format the data into a CSV string using only numbers
-    // Order: PT, Tank, Engine, Cont1, Cont2, State
-    // Example: 2500.0,10.5,50.2,1,1,1
-    int len = snprintf(buf, sizeof(buf), "%.1f,%.1f,%.1f,%.0f,%.0f,%d", 
-                       pt, tankThrust, engineThrust, cont1, cont2, state);
+    // Order: PT, Tank, Engine, Cont1, Cont2, State, Timestamp_ms
+    unsigned long timestamp = millis();
+    int len = snprintf(buf, sizeof(buf), "%.1f,%.2f,%.1f,%.0f,%.0f,%d,%lu", 
+                       pt, tankThrust, engineThrust, cont1, cont2, state, timestamp);
     
     if (len > 0) {
         // Transparent mode: Just print to the serial port!

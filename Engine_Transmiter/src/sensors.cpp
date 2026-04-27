@@ -7,6 +7,8 @@ bool sensorsInitialized = false;
 bool initSensors() {
     // Initialize I2C1 (Wire1) for Teensy 4.1 pins 16 (SCL1) and 17 (SDA1)
     Wire1.begin();
+    // Prevent I2C from hanging indefinitely if ADS1115 is unplugged (10 ms timeout, auto-reset)
+    // Wire1.setTimeout(10000, true);
 
     // Initialize ADS1115 on Wire1 (Address 0x48)
     if (!ads.begin(ADS1115_I2C_ADDR, &Wire1)) {

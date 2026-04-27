@@ -5,6 +5,10 @@
 #include <sensors.h>
 #include <PWMServo.h> 
 
+#define ASI_SPARK_PLUG 24  // J5 - Spark plug PWM pin
+#define ASI_SOLENOID 6     // J4 - Solenoid control pin (if used)
+
+
 PWMServo Fuel_Servo;  
 PWMServo Ox_Servo;  
 PWMServo Ox_load; 
@@ -63,6 +67,13 @@ void setup() {
   CO2_Servo.write(3); //3 close 65 open
   Cam_Servo.write(70); 
 
+  // //Setup spark plug gpio pin on pin 24 variable namened asi_spark_plug and ensure it has 0 pwm off (0)
+  // pinMode(ASI_SPARK_PLUG, OUTPUT);
+  // analogWrite(ASI_SPARK_PLUG, 0);
+
+  // //Setup mosfet on pin 6 using digital write mosfet var name is ASI_Solenoid and ensure it is off (LOW)
+  // pinMode(ASI_SOLENOID, OUTPUT);
+  // digitalWrite(ASI_SOLENOID, HIGH);
 
   Serial.println("System initialized, waiting for commands...");
 
@@ -144,6 +155,8 @@ void loop() {
       else if (commandVal == CMD_DISARM) {
         systemState = UNARMED;
         stopBuzzerTone(); // Ensure buzzer is off
+        analogWrite(ASI_SPARK_PLUG, 0); // Ensure spark plug is off
+        // digitalWrite(ASI_SOLENOID, LOW); // Ensure solenoid is off
         Fuel_Servo.write(6); 
         Ox_Servo.write(5); 
         Ox_load.write(10); 
@@ -170,6 +183,12 @@ void loop() {
         
         startBuzzerTone(1000); 
         triggerFire(); // Fire pyros immediately
+        //start spark plug with 255 pwm signal as analog write
+        // analogWrite(ASI_SPARK_PLUG, 255);
+        // digitalWrite(ASI_SOLENOID, HIGH); // Activate solenoid if used
+        Fuel_Servo.write(60);
+        Ox_Servo.write(65);
+
         
         camservo_fired = true;
       }
@@ -195,6 +214,7 @@ void loop() {
 
         if (elapsed >= 1000) {
             stopBuzzerTone();
+            //digitalWrite(ASI_SOLENOID, LOW); // Deactivate solenoid if used
         }
 
         if (elapsed > 2000) {
@@ -228,10 +248,22 @@ void loop() {
             }
         }
 
-        if (elapsed > 15000) {
-            Fuel_Servo.write(6); 
-            Ox_Servo.write(5); 
-        }
+        // if (elapsed > 2000) {
+        //   //digitalWrite(ASI_SOLENOID, HIGH);
+
+        // }
+
+        // if (elapsed > 3000) {
+        //   //digitalWrite(ASI_SOLENOID, LOW);
+        //   analogWrite(ASI_SPARK_PLUG, 0); // Turn off spark plug
+        //   Fuel_Servo.write(6); 
+        //   Ox_Servo.write(5); 
+        // }
+        // if (elapsed > 2000) {
+        //   analogWrite(ASI_SPARK_PLUG, 0); // Turn off spark plug
+        //   Fuel_Servo.write(6); 
+        //   Ox_Servo.write(5); 
+        // }
     }
 
 }
